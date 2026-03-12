@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RUST RAID</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0d0f0a;color:#c8c4a8;font-family:Arial,sans-serif;font-size:15px;}
+nav{background:#111308;border-bottom:2px solid #c8541a;padding:10px 15px;position:sticky;top:0;z-index:99;}
+.nav-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.logo{color:#e06030;font-weight:900;font-size:20px;letter-spacing:2px;}
+.btn-admin{background:transparent;color:#e06030;border:1px solid #e06030;padding:5px 12px;font-size:12px;cursor:pointer;font-weight:bold;}
+.nav-tabs{display:flex;gap:4px;flex-wrap:wrap;}
+.tab{background:#1a1d12;border:1px solid #333;color:#888;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:bold;}
+.tab.on{background:#c8541a;color:#fff;border-color:#c8541a;}
+.content{padding:15px;max-width:1200px;margin:0 auto;}
+.section{display:none;}.section.on{display:block;}
+.form-box{background:#111308;border-left:3px solid #c8541a;border:1px solid #333;padding:15px;margin-bottom:15px;}
+.form-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;}
+.fg{display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px;}
+label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;}
+input,select,textarea{background:#0d0f0a;border:1px solid #444;color:#e8e4d0;padding:8px 10px;font-size:14px;width:100%;outline:none;}
+input:focus,select:focus,textarea:focus{border-color:#c8541a;}
+textarea{resize:vertical;min-height:60px;}
+.btn-add{background:#c8541a;color:#fff;border:none;padding:10px 20px;font-size:13px;font-weight:bold;cursor:pointer;width:100%;margin-top:5px;}
+.btn-add:hover{background:#e06030;}
+.tiers{display:flex;gap:5px;flex-wrap:wrap;}
+.t{padding:6px 10px;border:1px solid #444;font-weight:bold;font-size:13px;cursor:pointer;}
+.tS{background:rgba(107,176,76,0.2);color:#88d060;}.tS.on{background:#6ab04c;border-color:#6ab04c;color:#0d0f0a;}
+.tA{background:rgba(90,159,212,0.2);color:#78bef0;}.tA.on{background:#5a9fd4;border-color:#5a9fd4;color:#0d0f0a;}
+.tB{background:rgba(212,184,74,0.2);color:#f0d060;}.tB.on{background:#d4b84a;border-color:#d4b84a;color:#0d0f0a;}
+.tC{background:rgba(200,84,26,0.2);color:#e06030;}.tC.on{background:#c8541a;border-color:#c8541a;color:#fff;}
+.tD{background:rgba(120,100,90,0.2);color:#887060;}.tD.on{background:#887060;border-color:#887060;color:#fff;}
+.filters{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;}
+.fb{background:transparent;border:1px solid #333;color:#888;padding:4px 10px;font-size:11px;font-weight:bold;cursor:pointer;}
+.fb.on{color:#f0d060;border-color:#d4b84a;background:rgba(212,184,74,0.08);}
+.search{padding:5px 10px;font-size:13px;width:160px;margin-left:auto;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1px;background:#2a2a1a;}
+.card{background:#111308;padding:12px;}
+.card-top{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;}
+.card-img{width:50px;height:50px;object-fit:cover;border:1px solid #333;flex-shrink:0;}
+.card-ph{width:50px;height:50px;background:#1e2116;border:1px solid #222;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.card-info{flex:1;}
+.card-title{font-weight:bold;font-size:14px;color:#e8e4d0;text-transform:uppercase;margin-bottom:4px;}
+.cat-tag{display:inline-block;font-size:10px;border:1px solid #444;color:#d4b84a;padding:1px 6px;margin-right:4px;}
+.tier-box{width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0;}
+.bS{background:#6ab04c;color:#0d0f0a;}.bA{background:#5a9fd4;color:#0d0f0a;}.bB{background:#d4b84a;color:#0d0f0a;}.bC{background:#c8541a;color:#fff;}.bD{background:#887060;color:#fff;}
+.card-cout{background:#1e2116;border:1px solid #222;padding:3px 8px;font-size:12px;margin-top:5px;display:inline-block;}
+.card-desc{font-size:13px;color:#888;line-height:1.5;margin-top:6px;padding-top:6px;border-top:1px solid #222;}
+.card-btns{display:flex;gap:5px;margin-top:8px;}
+.cbtn{background:transparent;border:1px solid #444;color:#888;padding:4px 10px;font-size:11px;font-weight:bold;cursor:pointer;}
+.cbtn:hover{color:#f0d060;border-color:#d4b84a;}
+.cbtn.del:hover{color:#cc3333;border-color:#cc3333;}
+.empty{text-align:center;padding:40px;color:#444;font-size:13px;background:#111308;}
+.edit-box{display:none;background:#1e2116;border-left:2px solid #c8541a;padding:10px;margin-top:8px;}
+.edit-box.on{display:block;}
+.edit-btns{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.btn-save{background:#c8541a;color:#fff;border:none;padding:6px 14px;font-size:12px;font-weight:bold;cursor:pointer;}
+.btn-cancel{background:transparent;color:#888;border:1px solid #444;padding:6px 14px;font-size:12px;cursor:pointer;}
+.calc-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:600px){.calc-wrap{grid-template-columns:1fr;}}
+.calc-box{background:#111308;border:1px solid #333;border-left:3px solid #d4b84a;padding:15px;}
+.calc-title{font-size:11px;font-weight:bold;letter-spacing:2px;color:#d4b84a;text-transform:uppercase;margin-bottom:12px;}
+.struct-list{display:flex;flex-direction:column;gap:5px;}
+.sb{background:#1a1d12;border:1px solid #333;padding:8px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;}
+.sb:hover,.sb.on{border-color:#d4b84a;background:rgba(212,184,74,0.08);}
+.sb.on{border-left:3px solid #d4b84a;}
+.sb-name{font-size:13px;font-weight:bold;color:#e8e4d0;text-transform:uppercase;}
+.sb-hp{font-size:11px;color:#666;}
+.exp-row{display:flex;align-items:center;gap:8px;padding:7px 8px;border:1px solid #222;margin-bottom:4px;background:#111308;}
+.exp-name{flex:1;font-size:13px;font-weight:bold;color:#e8e4d0;text-transform:uppercase;}
+.exp-sub{font-size:11px;color:#666;}
+.exp-qty{font-size:18px;font-weight:900;color:#f0d060;min-width:35px;text-align:right;}
+.best-box{background:rgba(200,84,26,0.12);border:1px solid rgba(200,84,26,0.3);padding:8px 10px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;}
+.best-label{font-size:11px;color:#e06030;}
+.best-val{font-size:16px;font-weight:900;color:#e06030;}
+.no-sel{text-align:center;padding:30px;color:#444;font-size:12px;}
+.mon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;}
+.mon-card{background:#111308;border:1px solid #333;}
+.mon-head{padding:10px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #222;}
+.mon-icon{font-size:22px;}
+.mon-name{font-size:14px;font-weight:bold;color:#e8e4d0;text-transform:uppercase;}
+.mon-sub{font-size:11px;color:#666;}
+.rad-badge{margin-left:auto;font-size:10px;font-weight:bold;padding:3px 8px;border:1px solid;white-space:nowrap;}
+.rad-none{color:#88d060;border-color:rgba(107,176,76,0.4);background:rgba(107,176,76,0.1);}
+.rad-low{color:#f0d060;border-color:rgba(212,184,74,0.4);background:rgba(212,184,74,0.1);}
+.rad-med{color:#e06030;border-color:rgba(200,84,26,0.4);background:rgba(200,84,26,0.1);}
+.rad-high{color:#ff6060;border-color:rgba(204,51,51,0.4);background:rgba(204,51,51,0.1);}
+.mon-body{padding:10px 12px;}
+.mon-sec{margin-bottom:8px;}
+.mon-sec-title{font-size:10px;font-weight:bold;letter-spacing:1px;color:#666;text-transform:uppercase;margin-bottom:5px;}
+.card-chips{display:flex;gap:4px;flex-wrap:wrap;}
+.chip{font-size:10px;font-weight:bold;padding:2px 7px;border:1px solid;}
+.chip-green{color:#88d060;border-color:rgba(107,176,76,0.4);background:rgba(107,176,76,0.1);}
+.chip-blue{color:#78bef0;border-color:rgba(90,159,212,0.4);background:rgba(90,159,212,0.1);}
+.chip-red{color:#ff7070;border-color:rgba(204,51,51,0.4);background:rgba(204,51,51,0.1);}
+.chip-none{color:#666;border-color:#333;background:#1a1d12;}
+.loot-list{display:flex;flex-direction:column;gap:3px;}
+.loot-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#c8c4a8;}
+.loot-dot{width:6px;height:6px;flex-shrink:0;}
+.dot-special{background:#e06030;}.dot-rare{background:#d4b84a;}.dot-common{background:#555;}
+.mon-tip{font-size:12px;color:#777;line-height:1.5;}
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:600px){.admin-grid{grid-template-columns:1fr;}}
+.abox{background:#111308;border:1px solid #333;border-left:3px solid #c8541a;padding:14px;}
+.abox.full{grid-column:1/-1;}
+.abox-title{font-size:11px;font-weight:bold;letter-spacing:2px;color:#f0d060;text-transform:uppercase;margin-bottom:10px;}
+.stat-g{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.sitem{background:#1a1d12;border:1px solid #222;padding:10px;text-align:center;}
+.snum{font-size:28px;font-weight:900;color:#e06030;line-height:1;}
+.slbl{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-top:3px;}
+.log-list{display:flex;flex-direction:column;gap:3px;max-height:250px;overflow-y:auto;}
+.log-row{display:flex;gap:8px;background:#1a1d12;border:1px solid #222;padding:5px 8px;border-left:2px solid #333;}
+.log-row.add{border-left-color:#6ab04c;}.log-row.del{border-left-color:#cc3333;}.log-row.edit{border-left-color:#d4b84a;}.log-row.admin{border-left-color:#e06030;}
+.log-tag{font-size:10px;color:#e06030;font-weight:bold;flex-shrink:0;}
+.log-msg{font-size:12px;color:#c8c4a8;}
+.log-time{font-size:10px;color:#444;margin-top:1px;}
+.log-empty{text-align:center;padding:20px;color:#444;font-size:11px;}
+.elist{display:flex;flex-direction:column;gap:3px;max-height:250px;overflow-y:auto;}
+.erow{display:flex;align-items:center;gap:8px;background:#1a1d12;border:1px solid #222;padding:6px 8px;}
+.erow-img{width:28px;height:28px;object-fit:cover;flex-shrink:0;}
+.erow-ph{width:28px;height:28px;background:#222;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.erow-name{font-size:13px;font-weight:bold;color:#e8e4d0;text-transform:uppercase;flex:1;}
+.erow-meta{font-size:10px;color:#555;}
+.btn-danger{background:rgba(204,51,51,0.1);color:#cc3333;border:1px solid rgba(204,51,51,0.3);padding:8px;font-size:11px;font-weight:bold;cursor:pointer;width:100%;margin-top:6px;text-transform:uppercase;}
+.btn-ghost{background:transparent;color:#888;border:1px solid #444;padding:8px;font-size:11px;font-weight:bold;cursor:pointer;width:100%;margin-top:6px;text-transform:uppercase;}
+.import-zone{border:1px dashed #444;padding:10px;text-align:center;cursor:pointer;position:relative;margin-top:6px;}
+.import-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;}
+.import-zone span{font-size:11px;color:#666;text-transform:uppercase;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:999;align-items:center;justify-content:center;padding:15px;}
+.overlay.on{display:flex;}
+.modal{background:#111308;border:1px solid #444;border-top:2px solid #c8541a;padding:20px;width:100%;max-width:380px;position:relative;}
+.modal-title{font-size:16px;font-weight:bold;color:#e8e4d0;text-transform:uppercase;margin-bottom:14px;}
+.modal-close{position:absolute;top:12px;right:12px;background:none;border:none;color:#888;font-size:16px;cursor:pointer;}
+.mmsg{font-size:12px;padding:5px 8px;margin-top:5px;}
+.mmsg.err{background:rgba(204,51,51,0.1);color:#cc3333;}
+.toast{position:fixed;bottom:20px;right:15px;background:#1a1d12;border:1px solid #c8541a;border-left:3px solid #e06030;padding:8px 14px;font-size:12px;font-weight:bold;color:#f0d060;text-transform:uppercase;z-index:9999;transform:translateY(20px);opacity:0;transition:all 0.25s;pointer-events:none;}
+.toast.on{transform:translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+
+<nav id="main-nav">
+  <div class="nav-top">
+    <div class="logo">⚙ RUST RAID</div>
+    <button class="btn-admin" onclick="openPw()">ADMIN</button>
+  </div>
+  <div class="nav-tabs">
+    <button class="tab on" onclick="goTab('db',this)">📦 BASE</button>
+    <button class="tab" onclick="goTab('calc',this)">💣 CALC</button>
+    <button class="tab" onclick="goTab('rad',this)">☢ RAD</button>
+  </div>
+</nav>
+
+<div class="content" id="main-content">
+  <div class="section on" id="sec-db">
+    <div class="form-box" style="margin-top:12px">
+      <div class="form-row">
+        <div class="fg"><label>Nom</label><input type="text" id="f-nom" placeholder="Rocket, C4..."></div>
+        <div class="fg"><label>Catégorie</label>
+          <select id="f-cat">
+            <option value="Arme">🔫 Arme</option><option value="Armure">🛡 Armure</option>
+            <option value="Stratégie">⚔️ Stratégie</option><option value="Explosif">💣 Explosif</option>
+            <option value="Craft">🔧 Craft</option><option value="Recyclage">♻️ Recyclage</option>
+            <option value="Composant">⚙️ Composant</option><option value="Autre">📦 Autre</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Tier</label>
+          <div class="tiers" id="main-tiers">
+            <div class="t tS" onclick="selTier(this,'S')">S</div>
+            <div class="t tA" onclick="selTier(this,'A')">A</div>
+            <div class="t tB" onclick="selTier(this,'B')">B</div>
+            <div class="t tC" onclick="selTier(this,'C')">C</div>
+            <div class="t tD" onclick="selTier(this,'D')">D</div>
+          </div>
+          <input type="hidden" id="f-tier">
+        </div>
+        <div class="fg"><label>Image</label>
+          <div style="position:relative;border:1px dashed #444;padding:8px;cursor:pointer;display:flex;align-items:center;gap:6px;background:#0d0f0a">
+            <input type="file" accept="image/*" id="f-img" onchange="prevImg(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%">
+            <span>🖼</span>
+            <img id="f-img-prev" src="" style="width:24px;height:24px;object-fit:cover;display:none;border:1px solid #333">
+            <span id="f-img-lbl" style="font-size:12px;color:#666">Choisir une image</span>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Coût</label><input type="text" id="f-cout" placeholder="1400 soufre"></div>
+        <div class="fg"><label>Description</label><textarea id="f-desc" placeholder="Tips, stratégie..."></textarea></div>
+      </div>
+      <button class="btn-add" onclick="addEntry()">+ AJOUTER</button>
+    </div>
+    <div class="filters">
+      <button class="fb on" onclick="setF('Tout',this)">TOUT</button>
+      <button class="fb" onclick="setF('Arme',this)">🔫</button>
+      <button class="fb" onclick="setF('Armure',this)">🛡</button>
+      <button class="fb" onclick="setF('Stratégie',this)">⚔️</button>
+      <button class="fb" onclick="setF('Explosif',this)">💣</button>
+      <button class="fb" onclick="setF('Craft',this)">🔧</button>
+      <button class="fb" onclick="setF('Recyclage',this)">♻️</button>
+      <button class="fb" onclick="setF('S',this)">★S</button>
+      <input class="search" type="text" placeholder="🔍 Rechercher" oninput="doSearch(this.value)">
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="section" id="sec-calc" style="margin-top:12px">
+    <div class="calc-wrap">
+      <div class="calc-box">
+        <div class="calc-title">// Structure</div>
+        <div class="struct-list" id="struct-list"></div>
+      </div>
+      <div class="calc-box">
+        <div class="calc-title">// Explosifs</div>
+        <div id="calc-result"><div class="no-sel">← Choisis une structure</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="sec-rad" style="margin-top:12px">
+    <div class="mon-grid" id="mon-grid"></div>
+  </div>
+</div>
+
+<div id="admin-page" style="display:none">
+  <nav>
+    <div class="nav-top">
+      <div class="logo" style="font-size:16px">⚙ RUST RAID <span style="color:#cc3333">// ADMIN</span></div>
+      <button class="btn-admin" onclick="closeAdmin()">← RETOUR</button>
+    </div>
+  </nav>
+  <div class="content" style="padding-top:12px">
+    <div class="admin-grid">
+      <div class="abox">
+        <div class="abox-title">// Stats</div>
+        <div class="stat-g">
+          <div class="sitem"><div class="snum" id="a-total">0</div><div class="slbl">Total</div></div>
+          <div class="sitem"><div class="snum" id="a-s">0</div><div class="slbl">Tier S</div></div>
+          <div class="sitem"><div class="snum" id="a-armes">0</div><div class="slbl">Armes</div></div>
+          <div class="sitem"><div class="snum" id="a-strats">0</div><div class="slbl">Strats</div></div>
+        </div>
+      </div>
+      <div class="abox" style="border-left-color:#cc3333">
+        <div class="abox-title" style="color:#cc3333">// Zone Danger</div>
+        <button class="btn-danger" onclick="confirmDel()">☢ TOUT SUPPRIMER</button>
+        <button class="btn-ghost" onclick="exportData()">📤 EXPORTER JSON</button>
+        <div class="import-zone"><input type="file" accept=".json" onchange="importData(this)"><span>📥 Importer JSON</span></div>
+      </div>
+      <div class="abox full">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div class="abox-title" style="margin-bottom:0">// Logs</div>
+          <button class="btn-ghost" style="width:auto;margin-top:0;padding:3px 10px;font-size:10px" onclick="clearLogs()">VIDER</button>
+        </div>
+        <div class="log-list" id="log-list"><div class="log-empty">Aucun log</div></div>
+      </div>
+      <div class="abox full">
+        <div class="abox-title">// Entrées</div>
+        <div class="elist" id="a-elist"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-pw">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('ov-pw').classList.remove('on')">✕</button>
+    <div class="modal-title">// Admin</div>
+    <div class="fg" style="margin-bottom:10px"><label>Mot de passe</label>
+      <input type="password" id="pw-in" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPw()">
+    </div>
+    <div id="pw-msg"></div>
+    <button class="btn-add" style="margin-top:10px" onclick="checkPw()">ENTRER</button>
+  </div>
+</div>
+<div class="overlay" id="ov-confirm">
+  <div class="modal" style="border-top-color:#cc3333">
+    <button class="modal-close" onclick="document.getElementById('ov-confirm').classList.remove('on')">✕</button>
+    <div class="modal-title" style="color:#cc3333">Confirmation</div>
+    <p style="font-size:13px;color:#888;margin-bottom:14px">Supprimer TOUTES les entrées ?</p>
+    <button class="btn-danger" onclick="resetAll()">OUI SUPPRIMER</button>
+    <button class="btn-ghost" onclick="document.getElementById('ov-confirm').classList.remove('on')">ANNULER</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var STRUCTS=[
+  {id:'wood-door',name:'Porte Bois',icon:'🚪',hp:200},
+  {id:'metal-door',name:'Porte Metal',icon:'🚪',hp:250},
+  {id:'armored-door',name:'Porte Armored',icon:'🚪',hp:800},
+  {id:'wood-wall',name:'Mur Bois',icon:'🧱',hp:250},
+  {id:'stone-wall',name:'Mur Pierre',icon:'🧱',hp:500},
+  {id:'metal-wall',name:'Mur Metal',icon:'🧱',hp:1000},
+  {id:'armored-wall',name:'Mur Armored',icon:'🧱',hp:2000},
+  {id:'wood-floor',name:'Sol Bois',icon:'⬛',hp:250},
+  {id:'stone-floor',name:'Sol Pierre',icon:'⬛',hp:500},
+  {id:'metal-floor',name:'Sol Metal',icon:'⬛',hp:1000}
+];
+var EXPS=[
+  {id:'rocket',name:'Rocket',icon:'🚀',sulfur:1400,dmg:{'wood-door':55,'metal-door':145,'armored-door':145,'wood-wall':350,'stone-wall':175,'metal-wall':300,'armored-wall':500,'wood-floor':350,'stone-floor':175,'metal-floor':300}},
+  {id:'c4',name:'C4 Timed',icon:'💣',sulfur:2200,dmg:{'wood-door':200,'metal-door':550,'armored-door':550,'wood-wall':550,'stone-wall':275,'metal-wall':550,'armored-wall':550,'wood-floor':550,'stone-floor':275,'metal-floor':550}},
+  {id:'satchel',name:'Satchel',icon:'💼',sulfur:480,dmg:{'wood-door':73,'metal-door':73,'armored-door':73,'wood-wall':73,'stone-wall':23,'metal-wall':23,'armored-wall':23,'wood-floor':73,'stone-floor':23,'metal-floor':23}},
+  {id:'beancan',name:'Bean Can',icon:'🫙',sulfur:120,dmg:{'wood-door':20,'metal-door':20,'armored-door':20,'wood-wall':20,'stone-wall':10,'metal-wall':10,'armored-wall':10,'wood-floor':20,'stone-floor':10,'metal-floor':10}},
+  {id:'f1',name:'F1 Grenade',icon:'💥',sulfur:60,dmg:{'wood-door':11,'metal-door':11,'armored-door':11,'wood-wall':11,'stone-wall':4,'metal-wall':4,'armored-wall':4,'wood-floor':11,'stone-floor':4,'metal-floor':4}},
+  {id:'expammo',name:'Explo Ammo',icon:'🔴',sulfur:25,dmg:{'wood-door':25,'metal-door':25,'armored-door':25,'wood-wall':25,'stone-wall':13,'metal-wall':13,'armored-wall':13,'wood-floor':25,'stone-floor':13,'metal-floor':13}},
+  {id:'firearrow',name:'Fire Arrow',icon:'🔥',sulfur:0,note:'Bois only',dmg:{'wood-door':40,'metal-door':0,'armored-door':0,'wood-wall':40,'stone-wall':0,'metal-wall':0,'armored-wall':0,'wood-floor':40,'stone-floor':0,'metal-floor':0}}
+];
+var MONS=[
+  {name:'Launch Site',icon:'🚀',rad:'high',radLbl:'RAD ELEVE',cards:['red'],loot:['HV Rockets','MLRS Rockets','Elite Crates'],lr:['special','special','special'],tip:'Monument le + dangereux. NBC obligatoire. Elite crates au sommet.'},
+  {name:'Military Tunnel',icon:'⛏️',rad:'high',radLbl:'RAD ELEVE',cards:['blue','red'],loot:['Military Crates','Elite Crates'],lr:['rare','special'],tip:'Souterrain. Carte bleue entree, rouge pour elite.'},
+  {name:'Airfield',icon:'✈️',rad:'med',radLbl:'RAD MOYEN',cards:['blue','green'],loot:['Military Crates','Weapons'],lr:['rare','rare'],tip:'Zone centrale dangereuse.'},
+  {name:'Power Plant',icon:'⚡',rad:'med',radLbl:'RAD MOYEN',cards:['blue','green'],loot:['Military Crates','Composants'],lr:['rare','rare'],tip:'Verte dehors, bleue dedans.'},
+  {name:'Train Yard',icon:'🚂',rad:'med',radLbl:'RAD MOYEN',cards:['blue','green'],loot:['Military Crates','Normal Crates'],lr:['rare','common'],tip:'Bonne source de caisses militaires.'},
+  {name:'Sewer Branch',icon:'🕳️',rad:'low',radLbl:'RAD FAIBLE',cards:['green'],loot:['Normal Crates','Medical'],lr:['common','common'],tip:'Facile. Carte verte seulement.'},
+  {name:'Water Treatment',icon:'💧',rad:'low',radLbl:'RAD FAIBLE',cards:['green','blue'],loot:['Normal Crates','Military Crates'],lr:['common','rare'],tip:'Exterieur sans carte.'},
+  {name:'Dome',icon:'🔵',rad:'med',radLbl:'RAD MOYEN',cards:[],loot:['Military Crates','Normal Crates'],lr:['rare','common'],tip:'Aucune carte, rad modere. Caisses au sommet.'},
+  {name:'Outpost',icon:'🏪',rad:'none',radLbl:'SANS RAD',cards:[],loot:['Recycler','Shop','Research Table'],lr:['special','special','special'],tip:'Zone neutre. Attaquer = KOS permanent.'},
+  {name:'Bandit Camp',icon:'🏴',rad:'none',radLbl:'SANS RAD',cards:[],loot:['Casino','Black Market','Recycler'],lr:['special','special','special'],tip:'Zone neutre bandits.'},
+  {name:'Lighthouse',icon:'🗼',rad:'none',radLbl:'SANS RAD',cards:[],loot:['Normal Crates','Barrels'],lr:['common','common'],tip:'Petit monument cotier.'},
+  {name:'Harbor',icon:'⚓',rad:'none',radLbl:'SANS RAD',cards:[],loot:['Normal Crates','Fuel'],lr:['common','common'],tip:'Bon early wipe.'},
+  {name:'Gas Station',icon:'⛽',rad:'none',radLbl:'SANS RAD',cards:[],loot:['Normal Crates','Fuel'],lr:['common','common'],tip:'Bonne source de fuel.'},
+  {name:'Supermarket',icon:'🛒',rad:'none',radLbl:'SANS RAD',cards:[],loot:['Food Crates','Medical'],lr:['common','common'],tip:'Beaucoup de nourriture early game.'}
+];
+
+var ADMIN_PW='rustraid2025';
+var entries=[];
+var curFilter='Tout';
+var curSearch='';
+var curTier=null;
+var pendingImg=null;
+
+function loadData(){try{entries=JSON.parse(localStorage.getItem('rr_entries')||'[]');}catch(e){entries=[];}}
+function saveData(){try{localStorage.setItem('rr_entries',JSON.stringify(entries));}catch(e){}}
+function loadLogs(){try{return JSON.parse(localStorage.getItem('rr_logs')||'[]');}catch(e){return[];}}
+function saveLogs(l){try{localStorage.setItem('rr_logs',JSON.stringify(l.slice(-100)));}catch(e){}}
+function addLog(type,msg){var l=loadLogs();var now=new Date();var time=now.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' '+now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});l.push({type:type,msg:msg,time:time});saveLogs(l);}
+
+loadData();
+render();
+buildCalc();
+buildMonuments();
+
+function goTab(id,btn){
+  document.querySelectorAll('.section').forEach(function(s){s.classList.remove('on');});
+  document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('on');});
+  document.getElementById('sec-'+id).classList.add('on');
+  btn.classList.add('on');
+}
+function prevImg(input){
+  if(!input.files[0])return;
+  var r=new FileReader();
+  r.onload=function(e){pendingImg=e.target.result;var p=document.getElementById('f-img-prev');p.src=pendingImg;p.style.display='block';document.getElementById('f-img-lbl').textContent=input.files[0].name;};
+  r.readAsDataURL(input.files[0]);
+}
+function prevEditImg(input,id){
+  if(!input.files[0])return;
+  var r=new FileReader();
+  r.onload=function(e){document.getElementById('eith-'+id).src=e.target.result;document.getElementById('eith-'+id).style.display='block';document.getElementById('eimg-'+id).value=e.target.result;};
+  r.readAsDataURL(input.files[0]);
+}
+function selTier(el,v){
+  document.querySelectorAll('#main-tiers .t').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on');curTier=v;document.getElementById('f-tier').value=v;
+}
+function buildEditTiers(id,cur){
+  return ['S','A','B','C','D'].map(function(t){return '<div class="t t'+t+(t===cur?' on':'')+'" onclick="selEditTier('+id+',this,\''+t+'\')">'+t+'</div>';}).join('');
+}
+function selEditTier(id,el,v){
+  el.closest('.edit-tiers').querySelectorAll('.t').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on');document.getElementById('etier-'+id).value=v;
+}
+function addEntry(){
+  var nom=document.getElementById('f-nom').value.trim();
+  var cat=document.getElementById('f-cat').value;
+  var tier=curTier;
+  var desc=document.getElementById('f-desc').value.trim();
+  var cout=document.getElementById('f-cout').value.trim();
+  if(!nom){toast('NOM REQUIS');return;}
+  if(!tier){toast('TIER REQUIS');return;}
+  var e={id:Date.now(),nom:nom,cat:cat,tier:tier,desc:desc,cout:cout,img:pendingImg||null,date:new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})};
+  entries.unshift(e);saveData();addLog('add','Ajout : "'+nom+'" ['+cat+'] Tier '+tier);render();toast('AJOUTE !');
+  document.getElementById('f-nom').value='';document.getElementById('f-desc').value='';document.getElementById('f-cout').value='';
+  document.getElementById('f-img').value='';document.getElementById('f-img-prev').style.display='none';document.getElementById('f-img-lbl').textContent='Choisir une image';
+  document.querySelectorAll('#main-tiers .t').forEach(function(t){t.classList.remove('on');});
+  curTier=null;pendingImg=null;
+}
+function delEntry(id){
+  var e=entries.find(function(x){return x.id===id;});
+  entries=entries.filter(function(x){return x.id!==id;});saveData();
+  if(e)addLog('del','Suppression : "'+e.nom+'"');render();toast('SUPPRIME');
+}
+function openEdit(id){
+  var box=document.getElementById('eb-'+id);
+  var isOpen=box.classList.contains('on');
+  document.querySelectorAll('.edit-box.on').forEach(function(b){b.classList.remove('on');});
+  if(!isOpen)box.classList.add('on');
+}
+function saveEdit(id){
+  var e=entries.find(function(x){return x.id===id;});if(!e)return;
+  var n=document.getElementById('en-'+id).value.trim();
+  var t=document.getElementById('etier-'+id).value;
+  var d=document.getElementById('ed-'+id).value.trim();
+  var c=document.getElementById('ec-'+id).value.trim();
+  var img=document.getElementById('eimg-'+id).value;
+  if(!n){toast('NOM REQUIS');return;}if(!t){toast('TIER REQUIS');return;}
+  var old=e.nom;e.nom=n;e.tier=t;e.desc=d;e.cout=c;if(img)e.img=img;
+  saveData();addLog('edit','Modif : "'+old+'" -> "'+n+'" [Tier '+t+']');render();toast('MODIFIE');
+}
+function catIcon(c){var m={'Arme':'🔫','Armure':'🛡','Stratégie':'⚔️','Explosif':'💣','Craft':'🔧','Recyclage':'♻️','Composant':'⚙️','Autre':'📦'};return m[c]||'📦';}
+function render(){
+  var grid=document.getElementById('grid');
+  var list=entries.filter(function(e){
+    if(curFilter==='S')return e.tier==='S';
+    return(curFilter==='Tout'||e.cat===curFilter)&&(!curSearch||e.nom.toLowerCase().indexOf(curSearch)>=0);
+  });
+  if(!list.length){grid.innerHTML='<div class="empty">Aucune entree - Ajoutes-en une !</div>';return;}
+  grid.innerHTML=list.map(function(e){
+    return '<div class="card" id="card-'+e.id+'">'+
+      '<div class="card-top">'+
+        (e.img?'<img class="card-img" src="'+e.img+'" alt="">':'<div class="card-ph">'+catIcon(e.cat)+'</div>')+
+        '<div class="card-info"><div class="card-title">'+e.nom+'</div>'+
+        '<span class="cat-tag">'+e.cat+'</span><span class="cat-tag">'+e.date+'</span></div>'+
+        '<div class="tier-box b'+e.tier+'">'+e.tier+'</div>'+
+      '</div>'+
+      (e.cout?'<div class="card-cout">💰 '+e.cout+'</div>':'')+
+      (e.desc?'<div class="card-desc">'+e.desc+'</div>':'')+
+      '<div class="card-btns">'+
+        '<button class="cbtn" onclick="openEdit('+e.id+')">✏️ MODIFIER</button>'+
+        '<button class="cbtn del" onclick="delEntry('+e.id+')">🗑 SUPPR.</button>'+
+      '</div>'+
+      '<div class="edit-box" id="eb-'+e.id+'">'+
+        '<div class="form-row">'+
+          '<div class="fg"><label>Nom</label><input type="text" id="en-'+e.id+'" value="'+e.nom.replace(/"/g,'&quot;')+'"></div>'+
+          '<div class="fg"><label>Tier</label><div class="tiers edit-tiers">'+buildEditTiers(e.id,e.tier)+'</div><input type="hidden" id="etier-'+e.id+'" value="'+e.tier+'"></div>'+
+        '</div>'+
+        '<div class="fg" style="margin-bottom:8px"><label>Image</label>'+
+          '<div style="position:relative;border:1px dashed #444;padding:6px;cursor:pointer;display:flex;align-items:center;gap:6px;background:#0d0f0a">'+
+            '<input type="file" accept="image/*" onchange="prevEditImg(this,'+e.id+')" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%">'+
+            '<span>🖼</span>'+(e.img?'<img id="eith-'+e.id+'" src="'+e.img+'" style="width:24px;height:24px;object-fit:cover;border:1px solid #333">':'<img id="eith-'+e.id+'" src="" style="width:24px;height:24px;display:none">')+
+            '<span style="font-size:11px;color:#666">Changer</span></div>'+
+          '<input type="hidden" id="eimg-'+e.id+'" value="">'+
+        '</div>'+
+        '<div class="fg" style="margin-bottom:8px"><label>Cout</label><input type="text" id="ec-'+e.id+'" value="'+(e.cout||'').replace(/"/g,'&quot;')+'"></div>'+
+        '<div class="fg" style="margin-bottom:8px"><label>Description</label><textarea id="ed-'+e.id+'">'+(e.desc||'')+'</textarea></div>'+
+        '<div class="edit-btns">'+
+          '<button class="btn-save" onclick="saveEdit('+e.id+')">SAUVEGARDER</button>'+
+          '<button class="btn-cancel" onclick="openEdit('+e.id+')">ANNULER</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+function setF(f,btn){curFilter=f;document.querySelectorAll('.fb').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');render();}
+function doSearch(q){curSearch=q.toLowerCase();render();}
+function buildCalc(){
+  document.getElementById('struct-list').innerHTML=STRUCTS.map(function(s){
+    return '<div class="sb" onclick="selStruct(\''+s.id+'\',this)" id="sb-'+s.id+'">'+
+      '<span style="font-size:16px">'+s.icon+'</span>'+
+      '<div><div class="sb-name">'+s.name+'</div><div class="sb-hp">'+s.hp+' HP</div></div>'+
+    '</div>';
+  }).join('');
+}
+function selStruct(id,el){
+  document.querySelectorAll('.sb').forEach(function(b){b.classList.remove('on');});
+  el.classList.add('on');calcResult(id);
+}
+function calcResult(id){
+  var s=STRUCTS.find(function(x){return x.id===id;});
+  var html='<div style="font-size:14px;font-weight:bold;color:#e8e4d0;text-transform:uppercase;margin-bottom:10px">'+s.icon+' '+s.name+' — '+s.hp+' HP</div>';
+  EXPS.forEach(function(exp){
+    var dmg=exp.dmg[id]||0;
+    if(dmg===0){html+='<div class="exp-row" style="opacity:0.3"><span style="font-size:15px;width:22px">'+exp.icon+'</span><div class="exp-name">'+exp.name+'</div><div class="exp-qty">—</div></div>';return;}
+    var qty=Math.ceil(s.hp/dmg);
+    var sulfur=qty*exp.sulfur;
+    html+='<div class="exp-row"><span style="font-size:15px;width:22px;text-align:center">'+exp.icon+'</span>'+
+      '<div style="flex:1"><div class="exp-name">'+exp.name+(exp.note?' <span style="font-size:10px;color:#666">('+exp.note+')</span>':'')+'</div>'+
+      '<div class="exp-sub">'+(sulfur>0?sulfur.toLocaleString()+' 🧪 soufre':'Pas de soufre')+'</div></div>'+
+      '<div class="exp-qty">x'+qty+'</div></div>';
+  });
+  var valid=EXPS.filter(function(e){return e.sulfur>0&&(e.dmg[id]||0)>0;});
+  var best=valid.map(function(e){var q=Math.ceil(s.hp/(e.dmg[id]||1));return{name:e.name,qty:q,s:q*e.sulfur};}).sort(function(a,b){return a.s-b.s;})[0];
+  if(best)html+='<div class="best-box"><span class="best-label">💡 + Eco : '+best.name+' x'+best.qty+'</span><span class="best-val">🧪 '+best.s.toLocaleString()+'</span></div>';
+  document.getElementById('calc-result').innerHTML=html;
+}
+function buildMonuments(){
+  var cc={green:'chip-green',blue:'chip-blue',red:'chip-red'};
+  var lc={special:'dot-special',rare:'dot-rare',common:'dot-common'};
+  document.getElementById('mon-grid').innerHTML=MONS.map(function(m){
+    var cards=m.cards.length?m.cards.map(function(c){return '<span class="chip '+cc[c]+'">'+(c==='green'?'🟢 Verte':c==='blue'?'🔵 Bleue':'🔴 Rouge')+'</span>';}).join(''):'<span class="chip chip-none">Aucune</span>';
+    var loot=m.loot.map(function(l,i){return '<div class="loot-item"><div class="loot-dot '+lc[m.lr[i]]+'"></div>'+l+'</div>';}).join('');
+    return '<div class="mon-card">'+
+      '<div class="mon-head"><span class="mon-icon">'+m.icon+'</span>'+
+        '<div><div class="mon-name">'+m.name+'</div><div class="mon-sub">Monument</div></div>'+
+        '<div class="rad-badge rad-'+m.rad+'">'+m.radLbl+'</div>'+
+      '</div>'+
+      '<div class="mon-body">'+
+        '<div class="mon-sec"><div class="mon-sec-title">Cartes</div><div class="card-chips">'+cards+'</div></div>'+
+        '<div class="mon-sec"><div class="mon-sec-title">Loot</div><div class="loot-list">'+loot+'</div></div>'+
+        '<div class="mon-sec"><div class="mon-sec-title">Tips</div><div class="mon-tip">'+m.tip+'</div></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+function openPw(){document.getElementById('ov-pw').classList.add('on');document.getElementById('pw-in').value='';document.getElementById('pw-msg').innerHTML='';setTimeout(function(){document.getElementById('pw-in').focus();},100);}
+function checkPw(){
+  if(document.getElementById('pw-in').value===ADMIN_PW){
+    document.getElementById('ov-pw').classList.remove('on');addLog('admin','Connexion admin');showAdmin();
+  }else{document.getElementById('pw-msg').innerHTML='<div class="mmsg err">Mot de passe incorrect</div>';}
+}
+function showAdmin(){
+  document.getElementById('main-content').style.display='none';
+  document.getElementById('main-nav').style.display='none';
+  document.getElementById('admin-page').style.display='block';
+  renderAdmin();
+}
+function closeAdmin(){
+  document.getElementById('admin-page').style.display='none';
+  document.getElementById('main-content').style.display='block';
+  document.getElementById('main-nav').style.display='block';
+}
+function renderAdmin(){
+  document.getElementById('a-total').textContent=entries.length;
+  document.getElementById('a-s').textContent=entries.filter(function(e){return e.tier==='S';}).length;
+  document.getElementById('a-armes').textContent=entries.filter(function(e){return e.cat==='Arme';}).length;
+  document.getElementById('a-strats').textContent=entries.filter(function(e){return e.cat==='Stratégie';}).length;
+  document.getElementById('a-elist').innerHTML=entries.length?entries.map(function(e){
+    return '<div class="erow">'+(e.img?'<img class="erow-img" src="'+e.img+'">':'<div class="erow-ph">'+catIcon(e.cat)+'</div>')+
+      '<div style="flex:1"><div class="erow-name">'+e.nom+'</div><div class="erow-meta">'+e.cat+' · TIER '+e.tier+' · '+e.date+'</div></div>'+
+      '<button class="cbtn del" onclick="adminDel('+e.id+')" style="flex-shrink:0">✕</button></div>';
+  }).join(''):'<div class="log-empty">Aucune entree</div>';
+  var logs=loadLogs();
+  var icons={add:'[+]',del:'[-]',edit:'[~]',admin:'[!]',import:'[<]',reset:'[X]'};
+  document.getElementById('log-list').innerHTML=logs.length?logs.slice().reverse().map(function(l){
+    return '<div class="log-row '+l.type+'"><div class="log-tag">'+(icons[l.type]||'[?]')+'</div>'+
+      '<div><div class="log-msg">'+l.msg+'</div><div class="log-time">'+l.time+'</div></div></div>';
+  }).join(''):'<div class="log-empty">Aucun log</div>';
+}
+function adminDel(id){
+  var e=entries.find(function(x){return x.id===id;});
+  entries=entries.filter(function(x){return x.id!==id;});saveData();
+  if(e)addLog('del','Admin suppr : "'+e.nom+'"');render();renderAdmin();
+}
+function clearLogs(){saveLogs([]);renderAdmin();toast('LOGS VIDES');}
+function confirmDel(){document.getElementById('ov-confirm').classList.add('on');}
+function resetAll(){entries=[];saveData();addLog('reset','Reset total');render();document.getElementById('ov-confirm').classList.remove('on');renderAdmin();toast('TOUT SUPPRIME');}
+function exportData(){
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify({entries:entries},null,2)],{type:'application/json'}));
+  a.download='rustraid-backup.json';a.click();addLog('admin','Export JSON');
+}
+function importData(input){
+  if(!input.files[0])return;
+  var r=new FileReader();
+  r.onload=function(e){
+    try{var data=JSON.parse(e.target.result);if(data.entries){entries=entries.concat(data.entries);saveData();}addLog('import','Import ('+((data.entries||[]).length)+' entrees)');render();renderAdmin();toast('IMPORTE');}
+    catch(err){toast('JSON INVALIDE');}
+  };
+  r.readAsText(input.files[0]);
+}
+var tt;
+function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){el.classList.remove('on');},2500);}
+</script>
+</body>
+</html>
